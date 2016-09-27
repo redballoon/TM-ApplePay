@@ -2,9 +2,12 @@
 A light robust javascript wrapper for the Apple Pay for Web API. Includes a partial end to end example (frontend and backend) for getting started with Apple Pay.
 
 
+*Still under development but any feedback is appreciated. Jsdoc and additional 'getting started' and certificate info will be added soon*
+
 ## Why
 I found that the available online resources for implementing Apple Pay for Web without using modern payment provider libraries (e.g Paypal, Stripe, Braintree) to be extremely lacking. There was also a lack of information regarding Backend implementation and how to
 successfully create a merchant session.
+
 
 ## Dependencies
 * jQuery
