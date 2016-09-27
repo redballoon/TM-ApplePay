@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Apple Pay for Web Example</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+	<script src="js/env.js"></script>
+	<script src="js/tm.applepay.js"></script>
+	<script>
+	jQuery(function ($) {
+		// obfuscate values being used
+		var env = window.environment || {};
+
+		// initiate light wrapper
+		var myApplePay = tm.applePay({
+			debug : true,
+			merchantId : env.merchantId,
+			endpoint : {
+				session : env.endpoint.session,
+				payment : env.endpoint.payment
+			},
+			displayName : env.displayName
+		}),
+		$applePayBtn = $('.apple-pay-button-with-text');
+
+		// check if Apple Pay for Web is available
+		myApplePay.available(function (available) {
+			// hide button if not available
+			if (available === false || typeof available.error !== 'undefined') {
+				$applePayBtn.prop('disabled', true);
+				return;
+			}
+			$applePayBtn.attr('data-available', true);
+		});	
+
+		// bind to click event
+		$applePayBtn.on('click', function (e) {
+			e.preventDefault();
+
+			if (typeof $applePayBtn.data('available') === 'undefined') return;
+
+			var request = {
+				countryCode : 'US',
+				currencyCode : 'USD',
+				// depends on wether you are on the cart page or checkout page
+				requiredBillingContactFields : ['postalAddress', 'phone', 'email', 'name'],
+				requiredShippingContactFields : ['postalAddress', 'phone', 'email', 'name'],
+				shippingType : ['shipping'],
+				shippingMethods : [{
+					label : 'Standard Ground',
+					detail : '5-7 business days',
+					amount : 0,
+					identifier : 'ground'
+				},
+				{
+					label : 'Second Day',
+					detail : '2-4 business days',
+					amount : 25.00,
+					identifier : 'second'
+				},
+				{
+					label : 'Overnight',
+					detail : '1-2 business days',
+					amount : 35.00,
+					identifier : 'overnight'
+				}],
+				// required: subtotal + taxes + shipping
+				total : {
+					label : 'Test 2',
+					amount : 95.99
+				},
+				// optional unless you are adding shipping/tax items then its best to add it
+				// as they affect the total depending on shipping information (which changes dynamically)
+					// ! do not use like an itemized list
+				lineItems : [],
+
+
+				// (optional) have TM wrapper track items and running total for you
+				trackLineItems : true,
+				customLineItems : {
+					// ! do not use like an itemized list
+					subtotal : {
+						type : 'final',//final or pending
+						label : 'SubTotal',
+						amount : 95.99
+					},
+					taxes : {
+						type : 'pending',
+						label : 'Taxes',
+						amount : 0
+					},
+					shipping : {
+						type : 'pending',
+						label : 'Shipping',
+						amount : 0
+					},
+					discounts : {}
+				}
+			};
+
+			var session = myApplePay.createSession(request, function (results) {
+				// handle fail
+				if (results === false || typeof results.error !== 'undefined') {
+					console.log('client: failed');
+					return;
+				}
+				// handle success  
+				console.log('client: success');
+			});
+			$(session).on('error', function (event) {
+				console.log('client: error', event);
+			});
+			$(session).on('shippingcontactselected', function (event) {
+				console.log('client: shippingcontactselected', event);
+
+				var status = window.ApplePaySession.STATUS_SUCCESS,
+					contact = event.originalEvent.shippingContact,
+					tax = 5.88;
+
+
+				// do it manually
+					// handle sale tax calculations
+					// handle re-calculating total if tax has changed
+					// handle new total/line items arguments if applicable
+				//myApplePay.updateTotal({});
+				//myApplePay.updateLineItems([]);
+				//myApplePay.complete('shippingContactSelection', status);
+
+				// OR
+
+				// using custom line items build into the wrapper
+					// handle sale tax calculations
+				myApplePay.updateTaxes(tax);
+					// will internally calculate running total and generate new line items
+				myApplePay.complete('shippingContactSelection', status);
+			});
+			$(session).on('shippingmethodselected', function (event) {
+				console.log('client: shippingmethodselected', event);
+				
+				// required to listen to at least this event
+				var status = window.ApplePaySession.STATUS_SUCCESS;
+
+				// do it manually
+					// handle re-calculating total if shipping has changed
+					// handle new total/line items arguments if applicable
+				//myApplePay.updateTotal({});
+				//myApplePay.updateLineItems([]);
+				//myApplePay.complete('shippingMethodSelection', status);
+
+				// OR
+
+				// using custom line items build in the wrapper
+					// updating shipping method is handled internally
+					// will internally calculate running total and generate new line items
+				myApplePay.complete('shippingMethodSelection', status);
+			});
+		});
+	});
+	</script>
+
+<style>
+.apple-pay-button-with-text {
+	--apple-pay-scale: 3; /* (height / 32) */
+	display: inline-flex;
+	justify-content: center;
+	font-size: 12px;
+	border-radius: 5px;
+	padding: 0px;
+	box-sizing: border-box;
+	min-width: 200px;
+	min-height: 32px;
+	/*max-height: 64px;*/
+}
+.apple-pay-button-black-with-text {
+	background-color: black;
+	color: white;
+}
+.apple-pay-button-white-with-text {
+	background-color: white;
+	color: black;
+}
+.apple-pay-button-white-with-line-with-text {
+	background-color: white;
+	color: black;
+	border: .5px solid black;
+}
+.apple-pay-button-with-text.apple-pay-button-black-with-text > .logo {
+	background-image: -webkit-named-image(apple-pay-logo-white);
+	background-color: black;
+}
+.apple-pay-button-with-text.apple-pay-button-white-with-text > .logo {
+	background-image: -webkit-named-image(apple-pay-logo-black);
+	background-color: white;
+}
+.apple-pay-button-with-text.apple-pay-button-white-with-line-with-text > .logo {
+	background-image: -webkit-named-image(apple-pay-logo-black);
+	background-color: white;
+}
+.apple-pay-button-with-text > .text {
+	font-family: -apple-system;
+	font-size: calc(1em * var(--apple-pay-scale));
+	font-weight: 300;
+	align-self: center;
+	margin-right: calc(2px * var(--apple-pay-scale));
+}
+.apple-pay-button-with-text > .logo {
+	width: calc(35px * var(--scale));
+	height: 100%;
+	background-size: 100% 60%;
+	background-repeat: no-repeat;
+	background-position: 0 50%;
+	margin-left: calc(2px * var(--apple-pay-scale));
+	border: none;
+}
+</style>
+<style>
+  #apple-pay-button {
+    /*display: none;*/
+    background-color: black;
+    background-image: -webkit-named-image(apple-pay-logo-white);
+    background-size: 100% 100%;
+    background-origin: content-box;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 128px;
+    padding: 10px 0;
+    border-radius: 10px;
+  }
+</style>
+</head>
+<body>
+	<div class="apple-pay-button-with-text apple-pay-button-black-with-text" id="apple-pay-button">
+		<!--<span class="text">Buy With</span><span class="logo"></span>-->
+	</div>
+</body>
+</html>

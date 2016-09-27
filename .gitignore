@@ -58,3 +58,8 @@ fastlane/screenshots
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+
+
+payment/config.php
+payment/complete.php
+example/js/env.js
