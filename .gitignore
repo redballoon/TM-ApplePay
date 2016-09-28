@@ -60,6 +60,8 @@ fastlane/screenshots
 iOSInjectionProject/
 
 
+#Custom:
+node_modules/*
 payment/config.php
 payment/complete.php
 example/js/env.js

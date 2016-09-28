@@ -1,0 +1,49 @@
+{
+  "name": "tm-applepay",
+  "version": "1.0.0",
+  "description": "A light robust javascript wrapper for the Apple Pay for Web API. Includes a partial end to end example (frontend and backend) for getting started with Apple Pay.",
+  "main": "gulpfile.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/redballoon/TM-ApplePay.git"
+  },
+  "keywords": [
+    "apple",
+    "pay",
+    "applepay",
+    "web",
+    "wrapper",
+    "php",
+    "merchantsession",
+    "merchant",
+    "session",
+    "end",
+    "to",
+    "end",
+    "wrapper",
+    "js"
+  ],
+  "author": "Fredi Quirino",
+  "license": "GPL-3.0+",
+  "bugs": {
+    "url": "https://github.com/redballoon/TM-ApplePay/issues"
+  },
+  "homepage": "https://github.com/redballoon/TM-ApplePay#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.0",
+    "gulp-jshint": "^2.0.1",
+    "gulp-notify": "^2.2.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^2.0.0",
+    "jshint": "^2.9.3",
+    "node-notifier": "^4.6.1",
+    "rename": "^1.0.3"
+  }
+}

@@ -1,4 +1,12 @@
-// jshint elision: true, strict:true, curly:false
+/**
+* tm.applepay
+*
+* A light robust javascript wrapper for the Apple Pay for Web API.
+*
+* @version v1.0.0
+* @author Fredi Quirino
+*/
+/* jshint elision: true, strict:true, curly:false */
 /* globals jQuery:true */
 (function (app) {
 	'use strict';
