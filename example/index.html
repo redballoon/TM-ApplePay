@@ -2,6 +2,7 @@
 <html>
 <head>
 	<title>Apple Pay for Web Example</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 	<script src="js/env.js"></script>
 	<script src="js/tm.applepay.js"></script>
@@ -20,7 +21,7 @@
 			},
 			displayName : env.displayName
 		}),
-		$applePayBtn = $('.apple-pay-button-with-text');
+		$applePayBtn = $('#apple-pay-button');
 
 		// check if Apple Pay for Web is available
 		myApplePay.available(function (available) {
@@ -42,8 +43,8 @@
 				countryCode : 'US',
 				currencyCode : 'USD',
 				// depends on wether you are on the cart page or checkout page
-				requiredBillingContactFields : ['postalAddress', 'phone', 'email', 'name'],
-				requiredShippingContactFields : ['postalAddress', 'phone', 'email', 'name'],
+				requiredBillingContactFields : ['postalAddress', 'name'],//['postalAddress', 'phone', 'email', 
+				requiredShippingContactFields : ['name', 'email', 'phone', 'postalAddress'],//['postalAddress', 'phone', 'email', 'name'],
 				shippingType : ['shipping'],
 				shippingMethods : [{
 					label : 'Standard Ground',
@@ -158,8 +159,38 @@
 	</script>
 
 <style>
+/* Template for logo only button (height independent). */
+.apple-pay-button {
+	display: inline-block;
+	background-size: 100% 60%;
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+	border-radius: 5px;
+	padding: 0px;
+	box-sizing: border-box;
+	min-width: 200px;
+	min-height: 32px;
+	max-height: 64px;
+}
+.apple-pay-button-black {
+	background-image: -webkit-named-image(apple-pay-logo-white);
+	background-color: black;
+}
+
+.apple-pay-button-white {
+	background-image: -webkit-named-image(apple-pay-logo-black);
+	background-color: white;
+}
+
+.apple-pay-button-white-with-line {
+	background-image: -webkit-named-image(apple-pay-logo-black);
+	background-color: white;
+	border: .5px solid black;
+}
+
+/* Template for 'Buy with' button with height: 32 */
 .apple-pay-button-with-text {
-	--apple-pay-scale: 3; /* (height / 32) */
+	--apple-pay-scale: 1; /* (height / 32) */
 	display: inline-flex;
 	justify-content: center;
 	font-size: 12px;
@@ -168,33 +199,40 @@
 	box-sizing: border-box;
 	min-width: 200px;
 	min-height: 32px;
-	/*max-height: 64px;*/
+	max-height: 64px;
 }
+
 .apple-pay-button-black-with-text {
 	background-color: black;
 	color: white;
 }
+
 .apple-pay-button-white-with-text {
 	background-color: white;
 	color: black;
 }
+
 .apple-pay-button-white-with-line-with-text {
 	background-color: white;
 	color: black;
 	border: .5px solid black;
 }
+
 .apple-pay-button-with-text.apple-pay-button-black-with-text > .logo {
 	background-image: -webkit-named-image(apple-pay-logo-white);
 	background-color: black;
 }
+
 .apple-pay-button-with-text.apple-pay-button-white-with-text > .logo {
 	background-image: -webkit-named-image(apple-pay-logo-black);
 	background-color: white;
 }
+
 .apple-pay-button-with-text.apple-pay-button-white-with-line-with-text > .logo {
 	background-image: -webkit-named-image(apple-pay-logo-black);
 	background-color: white;
 }
+
 .apple-pay-button-with-text > .text {
 	font-family: -apple-system;
 	font-size: calc(1em * var(--apple-pay-scale));
@@ -202,6 +240,7 @@
 	align-self: center;
 	margin-right: calc(2px * var(--apple-pay-scale));
 }
+
 .apple-pay-button-with-text > .logo {
 	width: calc(35px * var(--scale));
 	height: 100%;
@@ -211,25 +250,15 @@
 	margin-left: calc(2px * var(--apple-pay-scale));
 	border: none;
 }
-</style>
-<style>
-  #apple-pay-button {
-    /*display: none;*/
-    background-color: black;
-    background-image: -webkit-named-image(apple-pay-logo-white);
-    background-size: 100% 100%;
-    background-origin: content-box;
-    background-repeat: no-repeat;
-    width: 100%;
-    height: 128px;
-    padding: 10px 0;
-    border-radius: 10px;
-  }
+
+/* Custom example CSS */
+#apple-pay-button {
+	width: 100%;
+	height: 100px;
+}
 </style>
 </head>
 <body>
-	<div class="apple-pay-button-with-text apple-pay-button-black-with-text" id="apple-pay-button">
-		<!--<span class="text">Buy With</span><span class="logo"></span>-->
-	</div>
+	<div class="apple-pay-button apple-pay-button-black" id="apple-pay-button"></div>
 </body>
 </html>

@@ -167,6 +167,11 @@
 		};
 
 		return {
+			/*
+			*	getTotal -
+			*	
+			*
+			*/
 			getTotal : function () {
 				if (!session.id) {
 					methods.log('getTotal: invalid session.');
@@ -187,6 +192,11 @@
 
 				return total;
 			},
+			/*
+			*	getLineItems -
+			*	
+			*
+			*/
 			getLineItems : function () {
 				if (!session.id) {
 					methods.log('getLineItems: invalid session.');
@@ -206,6 +216,11 @@
 				}
 				return lineItems;
 			},
+			/*
+			*	updateTotal -
+			*	
+			*
+			*/
 			updateTotal : function (total) {
 				if (!session.instance) {
 					methods.log('updateTotal: invalid session.');
@@ -223,6 +238,11 @@
 				session.request.total = total;
 				return true;
 			},
+			/*
+			*	updateLineItems -
+			*	
+			*
+			*/
 			updateLineItems : function (lineItems) {
 				if (!session.instance) {
 					methods.log('updateLineItems: invalid session.');
@@ -238,6 +258,11 @@
 				session.request.lineItems = lineItems;
 				return true;
 			},
+			/*
+			*	updateShippingMethod -
+			*	
+			*
+			*/
 			updateShippingMethod : function (shippingMethod) {
 				methods.log('updateShippingMethod:', shippingMethod);
 
@@ -258,6 +283,11 @@
 
 				return true;
 			},
+			/*
+			*	updateTaxes -
+			*	
+			*
+			*/
 			updateTaxes : function (tax) {
 				if (!session.instance) {
 					methods.log('updateTaxes: invalid session.');
@@ -280,6 +310,11 @@
 
 				return true;
 			},
+			/*
+			*	complete -
+			*	
+			*
+			*/
 			complete : function (fn, status) {
 				methods.log('complete:', fn, status);
 
@@ -349,12 +384,11 @@
 
 				return true;
 			},
-			createToken : function () {
-
-			},
-			createPayment : function (settings, callback) {
-
-			},
+			/*
+			*	createSession -
+			*	
+			*
+			*/
 			createSession : function (request, callback) {
 				var that = this;
 
@@ -589,6 +623,11 @@
 
 				return session.instance;
 			},
+			/*
+			*	available -
+			*	
+			*
+			*/
 			available : function (callback) {
 				methods.log('available: will check availability.');
 
@@ -605,6 +644,11 @@
 					// fire events
 				});
 			},
+			/*
+			*	init -
+			*	
+			*
+			*/
 			init : function (o) {
 				o = !o ? {} : o;
 
