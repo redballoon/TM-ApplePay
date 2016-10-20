@@ -7,6 +7,9 @@ var notifier = require('node-notifier');
 var notify = require('gulp-notify');
 var rename = require('gulp-rename');
 
+
+var scriptName = 'tm.applepay.js';
+
 // Tasks
 gulp.task('default', ['watch', 'build']);
 
@@ -17,15 +20,19 @@ gulp.task('watch', function() {
 	return gulp.watch('./src/*.js', ['build']);
 });
 
-gulp.task('build', ['jshint'], function () {
-	return gulp.src('./src/*.js')
+gulp.task('build', ['copy'], function () {
+	return gulp.src('./src/*.js')// + scriptName)
 	.pipe(uglify({ preserveComments : 'license' }))
 	.on('error', notify.onError(function (error) {
 		return 'Error: ' + error.message;
 	}))
 	.pipe(rename({ suffix : '.min' }))
-	.pipe(gulp.dest('./build'));
-})
+	.pipe(gulp.dest('./lib'));
+});
+gulp.task('copy', ['jshint'], function () {
+	return gulp.src('./src/*.js')
+	.pipe(gulp.dest('./lib'));
+});
 
 // Jshint
 gulp.task('jshint', function () {
@@ -48,7 +55,7 @@ gulp.task('jshint', function () {
 });
 
 gulp.task('clean', function () {
-	var cmd = 'rm -rf ./build';
+	var cmd = 'rm -rf ./lib';
 	exec(cmd);
 	return gulp;
 });

@@ -4,11 +4,13 @@
 	<title>Apple Pay for Web Example</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+	<script src="../src/tm.applepay.min.js"></script>
+	
+	<!-- obfuscates values being used, not included on purpose. Use the example version to create your own. -->
 	<script src="js/env.js"></script>
-	<script src="js/tm.applepay.js"></script>
+
 	<script>
 	jQuery(function ($) {
-		// obfuscate values being used
 		var env = window.environment || {};
 
 		// initiate light wrapper
@@ -25,26 +27,27 @@
 
 		// check if Apple Pay for Web is available
 		myApplePay.available(function (available) {
+			$applePayBtn.removeClass('apple-pay-unavailable apple-pay-available');
+
 			// hide button if not available
 			if (available === false || typeof available.error !== 'undefined') {
-				$applePayBtn.prop('disabled', true);
+				$applePayBtn.addClass('apple-pay-unavailable');
 				return;
 			}
-			$applePayBtn.attr('data-available', true);
+			$applePayBtn.addClass('apple-pay-available');
 		});	
 
 		// bind to click event
 		$applePayBtn.on('click', function (e) {
 			e.preventDefault();
 
-			if (typeof $applePayBtn.data('available') === 'undefined') return;
+			if (!$applePayBtn.hasClass('apple-pay-available')) return;
 
 			var request = {
 				countryCode : 'US',
 				currencyCode : 'USD',
-				// depends on wether you are on the cart page or checkout page
-				requiredBillingContactFields : ['postalAddress', 'name'],//['postalAddress', 'phone', 'email', 
-				requiredShippingContactFields : ['name', 'email', 'phone', 'postalAddress'],//['postalAddress', 'phone', 'email', 'name'],
+				requiredBillingContactFields : ['postalAddress', 'name'],
+				requiredShippingContactFields : ['name', 'email', 'phone', 'postalAddress'],
 				shippingType : ['shipping'],
 				shippingMethods : [{
 					label : 'Standard Ground',
@@ -66,16 +69,16 @@
 				}],
 				// required: subtotal + taxes + shipping
 				total : {
-					label : 'Test 2',
+					label : 'Test',
 					amount : 95.99
 				},
-				// optional unless you are adding shipping/tax items then its best to add it
-				// as they affect the total depending on shipping information (which changes dynamically)
+				merchantCapabilities : ['supports3DS', 'supportsEMV', 'supportsCredit', 'supportsDebit'],
+				// optional: split costs into 4 item groups (subtotal, shipping, tax, discounts)
 					// ! do not use like an itemized list
 				lineItems : [],
 
 
-				// (optional) have TM wrapper track items and running total for you
+				// optional: have TM wrapper track items and running total for you
 				trackLineItems : true,
 				customLineItems : {
 					// ! do not use like an itemized list
@@ -101,7 +104,7 @@
 			var session = myApplePay.createSession(request, function (results) {
 				// handle fail
 				if (results === false || typeof results.error !== 'undefined') {
-					console.log('client: failed');
+					console.log('client: failed', results.error);
 					return;
 				}
 				// handle success  
@@ -115,7 +118,13 @@
 
 				var status = window.ApplePaySession.STATUS_SUCCESS,
 					contact = event.originalEvent.shippingContact,
-					tax = 5.88;
+					tax = 5.88,
+					shipping = {
+						city : contact.locality,
+						state : contact.administrativeArea,
+						country : 'US',
+						zipcode : contact.postalCode
+					};
 
 
 				// do it manually

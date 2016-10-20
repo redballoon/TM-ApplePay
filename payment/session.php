@@ -1,11 +1,16 @@
 <?php
 
+//////////////////////
+// debug options
+//////////////////////
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 
 //////////////////////
-// configuration file
+// configuration
 //////////////////////
+// Note: some files are not included on purpose, these were only added to obfuscate values being used for testing. Use the 
+// example version to create your own.
 include_once('config.php');
 
 ////////////////
@@ -82,7 +87,7 @@ if (empty($_REQUEST['displayName'])) {
 ///////////////////////////////
 $domain_name = $_REQUEST['domainName'];
 $display_name = $_REQUEST['displayName'];
-$url = $_REQUEST['validationUrl'];
+$url = $_REQUEST['validationURL'];
 
 
 $payload = array(
