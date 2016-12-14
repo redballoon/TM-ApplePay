@@ -14,8 +14,8 @@
 	/*
 	todo:
 	- remove stats, throw events instead so client side can do that if they want
-	- make Readme, note down that events will block execution
-	- do we handle the shipping address to set an appropriate shipping cost
+	- for readme, note down that native events will block execution
+	- for readme, note down that there is possible issues with merchantCapabilities depending on your payment processor
 	- provide validation for all 'request' values when creating a session
 	- our purpose:
 		- light wrapper
@@ -48,7 +48,6 @@
 				shippingMethods : [],
 				lineItems : []
 			},
-			filters : {},
 			sessionTimeout : 240000
 		},
 		// state tracking
@@ -63,7 +62,8 @@
 			request : null,
 			currentShippingMethod : null,
 			timeout : null,
-			counter : 0
+			counter : 0,
+			filters : {}
 		},
 		options;
 
@@ -88,25 +88,32 @@
 			rando : function (min, max) {
 				return Math.random() * (max - min) + min;
 			},
-			error : function (code, msg, error, callback) {
-				var response = { error : {} };
-
-				// stop payment session
-				if (session.instance && !(code === null && msg === null && error === null)) session.instance.abort();
+			reset : function () {
+				
+				if (session.timeout !== null) {
+					clearTimeout(session.timeout);
+					session.timeout = null;
+				}
 
 				session.id = null;
 				session.instance = null;
 				session.$instance = null;
 				session.request = null;
 				session.currentShippingMethod = null;
-				
-				if (session.timeout !== null) {
-					clearTimeout(session.timeout);
-					session.timeout = null;
-				}
+				session.filters = {};
+			},
+			error : function (code, msg, error, callback) {
+				var response = { error : {} };
+				/*
+				* todo:
+				* - remove callback argument
+				*/
+
+				// stop payment session
+				if (session.instance && !(code === null && msg === null && error === null)) session.instance.abort();
 				
 				// no need to create error response
-				if (typeof callback !== 'function') return;
+				//if (typeof callback !== 'function') return;
 				
 				if (code !== null) response.error.code = code;
 
@@ -121,15 +128,22 @@
 					response.error.message = error;
 				}
 				
-				callback(response);
+				// error event
+				methods.events('error', [session.id, response]);
+
+				methods.reset();
 			},
 			fail : function (response, callback) {
 				methods.error(null, null, response, callback);
 			},
 			normalizeAmount : function (n) {
-				var amount = typeof n === 'number' ? n : parseFloat(n);
+				// note: NaN.toFixed will still return NaN
+				// note: will only round the 2nd num depending on the dropped 3rd num
+				var amount = typeof n === 'number' ? n.toFixed(2) : parseFloat(n).toFixed(2);
+					amount = parseFloat(amount);
 					amount = isNaN(amount) ? 0 : amount;
 					amount = amount < 0 ? 0 : amount;
+					
 				return amount;
 			},
 			request : function (id, payload, callback) {
@@ -142,7 +156,6 @@
 
 				$.ajax(params).always(function (data, response, request) {
 					methods.log('request: request complete:', id, data);
-					
 
 					// doesn't match the session that made the initial request
 					if (!session.instance || session.id !== id) {
@@ -165,7 +178,6 @@
 			/*
 			*	getTotal -
 			*	
-			*
 			*/
 			getTotal : function () {
 				if (!session.id) {
@@ -182,15 +194,17 @@
 							amount += this.amount;
 						}
 					});
-					session.request.total.amount = methods.normalizeAmount(amount.toFixed(2));
+					session.request.total.amount = methods.normalizeAmount(amount);
 				}
+
+				// log
+				methods.log('getTotal:', total);
 
 				return total;
 			},
 			/*
 			*	getLineItems -
 			*	
-			*
 			*/
 			getLineItems : function () {
 				if (!session.id) {
@@ -214,7 +228,6 @@
 			/*
 			*	getSelectedShippingMethod -
 			*	
-			*
 			*/
 			getSelectedShippingMethod : function () {
 				if (!session.id) {
@@ -226,7 +239,6 @@
 			/*
 			*	updateTotal -
 			*	
-			*
 			*/
 			updateTotal : function (total) {
 				if (!session.instance) {
@@ -248,7 +260,6 @@
 			/*
 			*	updateLineItems -
 			*	
-			*
 			*/
 			updateLineItems : function (lineItems) {
 				if (!session.instance) {
@@ -292,11 +303,9 @@
 				return true;
 			},
 			/*
-			*	updateShippingMethod -
+			*	updateSelectedShippingMethod -
 			*	
-			*
 			*/
-			//updateShippingMethod
 			updateSelectedShippingMethod : function (shippingMethod) {
 				methods.log('updateSelectedShippingMethod:', shippingMethod);
 
@@ -378,6 +387,21 @@
 				return true;
 			},
 			/*
+			*	setFilter -
+			*/
+			setFilter : function (filter, handler) {
+				if (!session.instance) {
+					methods.log('setFilter: invalid session.');
+					return false;
+				}
+				if (typeof session.filters[filter] !== 'undefined') {
+					methods.log('setFilter: filter is already set.');
+					return false;	
+				}
+				session.filters[filter] = handler;
+				return true;
+			},
+			/*
 			*	complete -
 			*	
 			*
@@ -417,15 +441,28 @@
 						}
 					break;
 
-					case 'paymentMethodSelection':
-					case 'completePaymentMethodSelection':
-						fn = 'completePaymentMethodSelection';
-						if (!args.length) {
-							Array.prototype.splice.call(args, 0, 0, that.getTotal(), that.getLineItems());
-						} else {
-							// todo: validate user's arguments
-							Array.prototype.splice.call(args, 0, 0, status);
-						}
+					// todo: test & support this method
+					// case 'paymentMethodSelection':
+					// case 'completePaymentMethodSelection':
+					// 	fn = 'completePaymentMethodSelection';
+					// 	if (!args.length) {
+					// 		Array.prototype.splice.call(args, 0, 0, that.getTotal(), that.getLineItems());
+					// 	} else {
+					// 		// todo: validate user's arguments
+					// 		Array.prototype.splice.call(args, 0, 0, status);
+					// 	}
+					// break;
+					
+					case 'payment':
+					case 'completePayment':
+						fn = 'completePayment';
+						args = [status];
+					break;
+
+					case 'merchantValidation':
+					case 'completeMerchantValidation':
+						fn = 'completeMerchantValidation';
+						args = [status];
 					break;
 
 					default:
@@ -454,10 +491,11 @@
 			/*
 			*	createSession -
 			*	
-			*
 			*/
-			createSession : function (request, callback) {
+			createSession : function (request) {
 				var that = this;
+
+				methods.reset();
 
 				// merge request values with defaults
 				session.request = $.extend({}, options.paymentDefault, request);
@@ -465,17 +503,17 @@
 				// validate required fields
 				if (!session.request.countryCode) {
 					methods.log('createSession: invalid value for country code.');
-					methods.error(0, 'invalid arguments.', null, callback);
+					methods.error(0, 'invalid arguments.', null);
 					return;
 				}
 				if (!session.request.currencyCode) {
 					methods.log('createSession: invalid value for currency code.');
-					methods.error(0, 'invalid arguments.', null, callback);
+					methods.error(0, 'invalid arguments.', null);
 					return;
 				}
 				if (!session.request.total.label) {
 					methods.log('createSession: invalid value for label.');
-					methods.error(0, 'invalid arguments.', null, callback);
+					methods.error(0, 'invalid arguments.', null);
 					return;
 				}
 
@@ -483,7 +521,7 @@
 				session.request.total.amount = typeof session.request.total.amount === 'string' ? parseFloat(session.request.total.amount) : session.request.total.amount;
 				if (typeof session.request.total.amount !== 'number' || isNaN(session.request.total.amount) || session.request.total.amount < 0) {
 					methods.log('createSession: invalid value for amount.');
-					methods.error(0, 'invalid arguments.', null, callback);
+					methods.error(0, 'invalid arguments.', null);
 					return;
 				}
 				session.request.total.amount = session.request.total.amount.toFixed(2);
@@ -522,18 +560,19 @@
 					session.$instance = $(session.instance);
 				} catch (e) {
 					methods.log('createSession: an error occured: 1002.', e);
-					methods.error(1002, null, e, callback);
+					methods.error(1002, null, e);
 					return;
 				}
 				
 				// temp
 				//if (options.debug) window.tempsession = session.instance;
 
-				$(window).one('unload', function () {
-					methods.fail(false, null);
-				});
+				// note: is not considering that user might redirect the page within events
+				// $(window).one('unload', function () {
+				// 	methods.fail(false, null);
+				// });
 
-				// called when the payment sheet is displayed
+				// event is fired immediately after payment sheet/UI is displayed
 				session.$instance
 				.on('validatemerchant', function (event) {
 					// log
@@ -551,42 +590,30 @@
 
 					// begin request for merchant session
 					methods.request(session.id, params, function (data) {
+						
+						// note: inconvenient if user is inputting address/contact info and it closes
+						// timeout to match approximate timeout of merchant session
+						// session.timeout = setTimeout(function () {
+						// 	methods.log('createSession: session expired.');
+						// 	session.timeout = null;
+						// 	methods.fail(false, null);
+						// }, options.sessionTimeout);
 
-						// validation failed
-						if (!data) {
-							methods.error(2002, 'validation failed.', null, callback);
-							return;	
-						}
-						// validation successful
-						try {
-							session.instance.completeMerchantValidation(data);
-						} catch (e) {
-							methods.log('createSession: an error occured: 1006.', e);
-							//methods.error(1006, null, e, callback);
-							return;
-						}
-
-						// timeout
-						session.timeout = setTimeout(function () {
-							methods.log('createSession: session expired.');
-							session.timeout = null;
-							methods.fail(false, null);
-							// todo:
-							// trigger event for timeout on session object
-						}, options.sessionTimeout);
+						// allow client to handle response & react to it (e.g backend error structure)
+						session.$instance.trigger('validationcompleted', [session.id, data]);
 					});
 				})
-				// called when a shipping method is selected
+				// event is fired when a shipping method is selected (e.g free, ground, express)
 				.on('shippingmethodselected', function (event) {
 					methods.log('event: shippingmethodselected:', event);
 					that.updateSelectedShippingMethod(event.originalEvent.shippingMethod);
 				})
-				// called when the payment UI is dismissed with an error
+				// event is fired when the payment UI is dismissed
 				.on('cancel', function (event) {
 					methods.log('event: cancel:', event);
 					methods.fail(null, null);
 				})
-				// called when the user has authorized the Apple Pay payment, typically via TouchID
+				// event is fired when the user has authorized the payment, typically via TouchID
 				.on('paymentauthorized', function (event) {
 					methods.log('event: paymentauthorized:', event);
 					//event.payment
@@ -609,7 +636,7 @@
 							// displayName// MasterCard 1471
 							// network// MasterCard
 							// type// debit
-						// transactionIdentifier//  String
+						// transactionIdentifier// String
 
 					// reset our timer
 					if (session.timeout !== null) {
@@ -617,44 +644,30 @@
 						session.timeout = null;
 					}
 					
-					// todo: allow client script to alter/transform the payment data
 					var tokenData = event.originalEvent.payment,
-						params;
-					
-					params = {
-						url : options.endpoint.payment,
-						data : tokenData
-					};
+						params = {
+							url : options.endpoint.payment,
+							data : tokenData
+						};
+
+					// allow client to transform the payload
+					params = (typeof session.filters.payment === 'function') ? session.filters.payment(params) : params;
+					// validate params
+					if (false === params) {
+						methods.log('event: paymentauthorized: invalid params');
+						return;
+					}
 
 					// begin request to send token to our server
 					methods.request(session.id, params, function (data) {
-						var url = '',
-							status;
 						
-						// todo: trigger event instead, data depends on client's backend response
-
-						// validation failed
-						if (!data) {
-							status = window.ApplePaySession.STATUS_FAILURE;
-						} else {
-							status = window.ApplePaySession.STATUS_SUCCESS;
-						}
-
-						try {
-							session.instance.completePayment(status);
-						} catch (e) {
-							methods.log('createSession: an error occured: 1010.', e);
-							methods.error(1010, null, e, callback);
-							return;
-						}
-
+						// let client handle server responses (e.g error structure may vary)
+						session.$instance.trigger('paymentcompleted', [session.id, data]);
 					});
 				});
-				// called when a shipping contact is selected
+				// event is fired when a shipping contact is selected
 				//.on('shippingcontactselected', function (event) {
 					//methods.log('event: shippingcontactselected:', event);
-					// todo:
-					// - do we require family/given names ?
 					/*
 					e.g:
 					event.originalEvent.shippingContact
@@ -665,19 +678,8 @@
 					locality// South Plainfield
 					postalCode// 07080
 					*/
-					
-					//var status = window.ApplePaySession.STATUS_SUCCESS;//STATUS_INVALID_SHIPPING_CONTACT, STATUS_INVALID_SHIPPING_POSTAL_ADDRESS
-
-					//methods.log('event: shippingcontactselected:', status, request.shippingMethods, request.total, request.lineItems);
-
-					// try {
-					// 	session.instance.completeShippingContactSelection(status, request.shippingMethods, request.total, request.lineItems);
-					// } catch (e) {
-					// 	methods.log('createSession: an error occured 1008.', e);
-					// 	methods.error(1008, e, callback);
-					// }
 				//})
-				// called when a new payment method is selected
+				// event is fired when a new payment method is selected
 				//.on('paymentmethodselected', function (event) {
 					//methods.log('event: paymentmethodselected:', event);
 					/*
@@ -694,31 +696,31 @@
 					session.instance.begin();
 				} catch (e) {
 					methods.log('createSession: an error occured: 1004.', e);
-					methods.error(1004, null, e, callback);
+					methods.error(1004, null, e);
 					return;
 				}
 				
-				// analytics
-				//if (options.enableStats) methods.startStats();
-
 				return session.instance;
 			},
 			/*
 			*	close -
 			*	
-			*
 			*/
 			close : function () {
 				if (!session.instance) {
 					methods.log('close: invalid session.');
 					return false;
 				}
-				methods.fail(false, null);
+
+				methods.log('close:');
+
+				session.instance.abort();
+
+				methods.reset();
 			},
 			/*
 			*	available -
 			*	
-			*
 			*/
 			available : function (callback) {
 				methods.log('available: will check availability.');
@@ -739,7 +741,6 @@
 			/*
 			*	init -
 			*	
-			*
 			*/
 			init : function (o) {
 				o = !o ? {} : o;
@@ -783,4 +784,3 @@
 		return ApplePay.init(o);
 	};
 })(window.tm || (window.tm = {}));
-   

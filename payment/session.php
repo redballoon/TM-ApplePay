@@ -11,50 +11,8 @@ ini_set("display_errors", 1);
 //////////////////////
 // Note: some files are not included on purpose, these were only added to obfuscate values being used for testing. Use the 
 // example version to create your own.
-include_once('config.php');
+include_once('config.php');//include_once('config-example.php');
 
-////////////////
-// mini curl
-////////////////
-function mini_curl($url, $options = false, $bypass = false) {
-	if (!function_exists('curl_init')) {
-		trigger_error(__FUNCTION__.'(): cURL support is not available',E_USER_ERROR);
-		return false;
-	}
-	// Initialize cURL session
-	if (false === $ch = curl_init($url)) {
-		trigger_error(__FUNCTION__.'(): cURL could not be initialized',E_USER_WARNING);
-	}
-
-	// If incoming OAUTH options are set
-	if ($options) {
-		$curl_options = $options;
-	} else {
-		// Set cURL options and execute
-		$curl_options = array(
-			CURLOPT_URL => $url,
-			CURLOPT_FILETIME => true,
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_NOBODY => (!$bypass)// true uses HEAD instead of GET
-		);
-	}
-
-	curl_setopt_array($ch, $curl_options);
-	$body = curl_exec($ch);
-
-	// Get attributes
-	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-	// unsuccessful requests (non 2xx HTTP codes)
-	if (!is_int($http_code) || $http_code < 200 || $http_code > 299) {
-		trigger_error(__FUNCTION__.'(): unsuccessful request. code:'.$http_code, E_USER_WARNING);
-		curl_close($ch);
-		return false;
-	}
-	
-	curl_close($ch);
-	return $body;
-}
 ////////////////
 // JSON output
 ////////////////
@@ -67,7 +25,6 @@ function json_output($x) {
 ///////////////////////////////
 // simple request validation
 ///////////////////////////////
-
 if (empty($_REQUEST['validationUrl'])) {
 	json_output(false);
 }
@@ -113,7 +70,12 @@ $options = array(
 	CURLOPT_SSLKEY => CERTIFICATE_PATH
 );
 
-$result = mini_curl($url, $options);
+//////////////////////
+// curl request
+//////////////////////
+// Note: some files are not included on purpose, these were only added to obfuscate values being used for testing. Use the 
+// example version to create your own.
+$result = curl_handler($url, $options);
 
 header('Content-type: application/json; charset=utf-8');
 echo $result;

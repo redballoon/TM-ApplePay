@@ -35,5 +35,15 @@ some cases.
 
 *Certificates*
 
+#### Payment Processor
 
 ## Usage
+
+
+## Methods
+## Events
+todo: add table
+-------------------
+event name  | Notes: will NOTE be triggered...
+			| Description:
+--------------
